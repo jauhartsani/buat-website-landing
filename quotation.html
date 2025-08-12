@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation & Invoice Generator | Buat Website</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2D3748 0%, #1A202C 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .form-section {
+            padding: 40px;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .preview-section {
+            padding: 40px;
+            background: white;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: #64748b;
+        }
+
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .items-section {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            background: white;
+            margin-bottom: 20px;
+        }
+
+        .items-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 2px solid #e5e7eb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .item-row input {
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+
+        .remove-item {
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .remove-item:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+
+        .add-item {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-item:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .totals {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .total-row:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1f2937;
+            border-top: 2px solid #3b82f6;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        .preview {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 30px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            min-height: 500px;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .company-info h3 {
+            color: #3b82f6;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .document-info {
+            text-align: right;
+        }
+
+        .document-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .client-info {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .preview-table th, .preview-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .preview-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .preview-totals {
+            margin-left: auto;
+            width: 300px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .form-section, .preview-section {
+                padding: 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .items-header, .item-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+
+        .success-message {
+            background: #10b981;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message {
+            background: #ef4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">
+        <i class="fas fa-arrow-left"></i> Kembali ke Website
+    </a>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-file-invoice-dollar"></i> Generator Quotation & Invoice</h1>
+            <p>Buat quotation dan invoice profesional dengan mudah</p>
+        </div>
+
+        <div class="main-content">
+            <div class="form-section">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('quotation')">
+                        <i class="fas fa-file-alt"></i> Quotation
+                    </button>
+                    <button class="tab" onclick="switchTab('invoice')">
+                        <i class="fas fa-file-invoice"></i> Invoice
+                    </button>
+                </div>
+
+                <div class="success-message" id="successMessage"></div>
+                <div class="error-message" id="errorMessage"></div>
+
+                <form id="documentForm">
+                    <!-- Company Info -->
+                    <div class="form-group">
+                        <label><i class="fas fa-building"></i> Informasi Perusahaan</label>
+                        <input type="text" id="companyName" placeholder="Nama Perusahaan" value="Buat Website - Jauhar's Corps">
+                        <div class="form-row" style="margin-top: 10px;">
+                            <input type="email" id="companyEmail" placeholder="Email" value="alfytsani@gmail.com">
+                            <input type="tel" id="companyPhone" placeholder="Telepon" value="+62 85858546342">
+                        </div>
+                        <textarea id="companyAddress" rows="2" placeholder="Alamat Perusahaan">Jakarta, Indonesia</textarea>
+                    </div>
+
+                    <!-- Client Info -->
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i> Informasi Klien</label>
+                        <input type="text" id="clientName" placeholder="Nama Klien" required>
+                        <div class="form-row" style="margin-top: 10px;">
+                            <input type="email" id="clientEmail" placeholder="Email Klien">
+                            <input type="tel" id="clientPhone" placeholder="Telepon Klien">
+                        </div>
+                        <textarea id="clientAddress" rows="2" placeholder="Alamat Klien"></textarea>
+                    </div>
+
+                    <!-- Document Info -->
+                    <div class="form-group">
+                        <label><i class="fas fa-info-circle"></i> Detail Dokumen</label>
+                        <div class="form-row">
+                            <input type="text" id="documentNumber" placeholder="No. Dokumen" required>
+                            <input type="date" id="documentDate" required>
+                        </div>
+                        <div class="form-row" style="margin-top: 10px;">
+                            <input type="date" id="validUntil" placeholder="Berlaku Hingga">
+                            <select id="paymentTerms">
+                                <option value="Cash">Cash</option>
+                                <option value="Net 7">Net 7 Days</option>
+                                <option value="Net 15">Net 15 Days</option>
+                                <option value="Net 30">Net 30 Days</option>
+                                <option value="50% DP">50% DP + 50% Pelunasan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="items-section">
+                        <div class="items-header">
+                            <div>Deskripsi</div>
+                            <div>Qty</div>
+                            <div>Harga</div>
+                            <div>Total</div>
+                            <div></div>
+                        </div>
+                        <div id="itemsContainer">
+                            <div class="item-row">
+                                <input type="text" placeholder="Website Company Profile" class="item-desc">
+                                <input type="number" value="1" min="1" class="item-qty">
+                                <input type="number" value="1500000" min="0" class="item-price">
+                                <input type="number" readonly class="item-total">
+                                <button type="button" class="remove-item" onclick="removeItem(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-item" onclick="addItem()">
+                            <i class="fas fa-plus"></i> Tambah Item
+                        </button>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="totals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">Rp 0</span>
+                        </div>
+                        <div class="form-row" style="margin: 10px 0;">
+                            <select id="taxType">
+                                <option value="0">Tanpa Pajak</option>
+                                <option value="11">PPN 11%</option>
+                                <option value="10">PPh 10%</option>
+                            </select>
+                            <input type="number" id="discount" placeholder="Diskon" value="0" min="0">
+                        </div>
+                        <div class="total-row">
+                            <span>Pajak:</span>
+                            <span id="tax">Rp 0</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Diskon:</span>
+                            <span id="discountAmount">Rp 0</span>
+                        </div>
+                        <div class="total-row">
+                            <span>TOTAL:</span>
+                            <span id="grandTotal">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="form-group">
+                        <label><i class="fas fa-sticky-note"></i> Catatan</label>
+                        <textarea id="notes" rows="3" placeholder="Syarat dan ketentuan, atau catatan tambahan...">Terima kasih atas kepercayaan Anda. Untuk informasi lebih lanjut, silahkan hubungi kami.</textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="preview-section">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating PDF...</p>
+                </div>
+                
+                <div class="preview" id="preview">
+                    <div class="preview-header">
+                        <div class="company-info">
+                            <h3 id="previewCompanyName">Buat Website - Jauhar's Corps</h3>
+                            <p id="previewCompanyEmail">alfytsani@gmail.com</p>
+                            <p id="previewCompanyPhone">+62 85858546342</p>
+                            <p id="previewCompanyAddress">Jakarta, Indonesia</p>
+                        </div>
+                        <div class="document-info">
+                            <h2 class="document-title" id="documentTitle">QUOTATION</h2>
+                            <p><strong>No:</strong> <span id="previewDocNumber">-</span></p>
+                            <p><strong>Tanggal:</strong> <span id="previewDocDate">-</span></p>
+                            <p><strong>Valid Until:</strong> <span id="previewValidUntil">-</span></p>
+                        </div>
+                    </div>
+
+                    <div class="client-info">
+                        <strong>Kepada:</strong><br>
+                        <span id="previewClientName">-</span><br>
+                        <span id="previewClientEmail">-</span><br>
+                        <span id="previewClientPhone">-</span><br>
+                        <span id="previewClientAddress">-</span>
+                    </div>
+
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>Deskripsi</th>
+                                <th>Qty</th>
+                                <th>Harga</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewItems">
+                            <tr>
+                                <td>Website Company Profile</td>
+                                <td>1</td>
+                                <td>Rp 1.500.000</td>
+                                <td>Rp 1.500.000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="preview-totals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="previewSubtotal">Rp 1.500.000</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Pajak:</span>
+                            <span id="previewTax">Rp 0</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Diskon:</span>
+                            <span id="previewDiscount">Rp 0</span>
+                        </div>
+                        <div class="total-row">
+                            <span><strong>TOTAL:</strong></span>
+                            <span id="previewGrandTotal"><strong>Rp 1.500.000</strong></span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px;">
+                        <strong>Catatan:</strong><br>
+                        <span id="previewNotes">Terima kasih atas kepercayaan Anda. Untuk informasi lebih lanjut, silahkan hubungi kami.</span>
+                    </div>
+
+                    <div style="margin-top: 40px; text-align: right;">
+                        <p><strong>Hormat kami,</strong></p>
+                        <br><br>
+                        <p><strong>Buat Website Team</strong></p>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="btn btn-primary" onclick="downloadPDF()">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="printDocument()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="sendWhatsApp()">
+                        <i class="fab fa-whatsapp"></i> Kirim via WA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDocType = 'quotation';
+        
+        // Set default date
+        document.getElementById('documentDate').value = new Date().toISOString().split('T')[0];
+        
+        // Set default valid until (30 days from today)
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 30);
+        document.getElementById('validUntil').value = futureDate.toISOString().split('T')[0];
+
+        function switchTab(type) {
+            currentDocType = type;
+            
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update document title
+            const title = type === 'quotation' ? 'QUOTATION' : 'INVOICE';
+            document.getElementById('documentTitle').textContent = title;
+            document.getElementById('previewDocNumber').textContent = generateDocNumber(type);
+            
+            updatePreview();
+        }
+
+        function generateDocNumber(type) {
+            const prefix = type === 'quotation' ? 'QUO' : 'INV';
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            
+            return `${prefix}-${year}${month}${day}-${random}`;
+        }
+
+        function addItem() {
+            const container = document.getElementById('itemsContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'item-row';
+            newRow.innerHTML = `
+                <input type="text" placeholder="Deskripsi layanan" class="item-desc">
+                <input type="number" value="1" min="1" class="item-qty">
+                <input type="number" value="0" min="0" class="item-price">
+                <input type="number" readonly class="item-total">
+                <button type="button" class="remove-item" onclick="removeItem(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(newRow);
+            
+            // Add event listeners to new inputs
+            addItemEventListeners(newRow);
+            calculateTotals();
+        }
+
+        function removeItem(button) {
+            if (document.querySelectorAll('.item-row').length > 1) {
+                button.closest('.item-row').remove();
+                calculateTotals();
+                updatePreview();
+            } else {
+                showMessage('error', 'Minimal harus ada satu item!');
+            }
+        }
+
+        function addItemEventListeners(row) {
+            const qty = row.querySelector('.item-qty');
+            const price = row.querySelector('.item-price');
+            const desc = row.querySelector('.item-desc');
+            
+            [qty, price, desc].forEach(input => {
+                input.addEventListener('input', () => {
+                    calculateTotals();
+                    updatePreview();
+                });
+            });
+        }
+
+        function calculateTotals() {
+            let subtotal = 0;
+            
+            document.querySelectorAll('.item-row').forEach(row => {
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const total = qty * price;
+                
+                row.querySelector('.item-total').value = total;
+                subtotal += total;
+            });
+            
+            const taxRate = parseFloat(document.getElementById('taxType').value) || 0;
+            const discountAmount = parseFloat(document.getElementById('discount').value) || 0;
+            
+            const tax = (subtotal * taxRate) / 100;
+            const grandTotal = subtotal + tax - discountAmount;
+            
+            // Update display
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('tax').textContent = formatCurrency(tax);
+            document.getElementById('discountAmount').textContent = formatCurrency(discountAmount);
+            document.getElementById('grandTotal').textContent = formatCurrency(grandTotal);
+        }
+
+        function updatePreview() {
+            // Company info
+            document.getElementById('previewCompanyName').textContent = document.getElementById('companyName').value;
+            document.getElementById('previewCompanyEmail').textContent = document.getElementById('companyEmail').value;
+            document.getElementById('previewCompanyPhone').textContent = document.getElementById('companyPhone').value;
+            document.getElementById('previewCompanyAddress').textContent = document.getElementById('companyAddress').value;
+            
+            // Client info
+            document.getElementById('previewClientName').textContent = document.getElementById('clientName').value || '-';
+            document.getElementById('previewClientEmail').textContent = document.getElementById('clientEmail').value || '-';
+            document.getElementById('previewClientPhone').textContent = document.getElementById('clientPhone').value || '-';
+            document.getElementById('previewClientAddress').textContent = document.getElementById('clientAddress').value || '-';
+            
+            // Document info
+            document.getElementById('previewDocNumber').textContent = document.getElementById('documentNumber').value || generateDocNumber(currentDocType);
+            document.getElementById('previewDocDate').textContent = formatDate(document.getElementById('documentDate').value);
+            document.getElementById('previewValidUntil').textContent = formatDate(document.getElementById('validUntil').value);
+            
+            // Items
+            const previewItems = document.getElementById('previewItems');
+            previewItems.innerHTML = '';
+            
+            document.querySelectorAll('.item-row').forEach(row => {
+                const desc = row.querySelector('.item-desc').value || '-';
+                const qty = row.querySelector('.item-qty').value || '0';
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const total = parseFloat(row.querySelector('.item-total').value) || 0;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${desc}</td>
+                    <td>${qty}</td>
+                    <td>${formatCurrency(price)}</td>
+                    <td>${formatCurrency(total)}</td>
+                `;
+                previewItems.appendChild(tr);
+            });
+            
+            // Totals
+            document.getElementById('previewSubtotal').textContent = document.getElementById('subtotal').textContent;
+            document.getElementById('previewTax').textContent = document.getElementById('tax').textContent;
+            document.getElementById('previewDiscount').textContent = document.getElementById('discountAmount').textContent;
+            document.getElementById('previewGrandTotal').textContent = document.getElementById('grandTotal').textContent;
+            
+            // Notes
+            document.getElementById('previewNotes').textContent = document.getElementById('notes').value || '-';
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function downloadPDF() {
+            if (!validateForm()) return;
+            
+            showLoading(true);
+            
+            setTimeout(() => {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    // Set font
+                    doc.setFont('helvetica');
+                    
+                    // Header
+                    doc.setFontSize(20);
+                    doc.setTextColor(59, 130, 246);
+                    doc.text(document.getElementById('companyName').value, 20, 25);
+                    
+                    doc.setFontSize(10);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text(document.getElementById('companyEmail').value, 20, 32);
+                    doc.text(document.getElementById('companyPhone').value, 20, 37);
+                    doc.text(document.getElementById('companyAddress').value, 20, 42);
+                    
+                    // Document title
+                    doc.setFontSize(24);
+                    doc.setTextColor(31, 41, 55);
+                    const docTitle = currentDocType === 'quotation' ? 'QUOTATION' : 'INVOICE';
+                    doc.text(docTitle, 150, 25);
+                    
+                    doc.setFontSize(10);
+                    doc.text(`No: ${document.getElementById('documentNumber').value || generateDocNumber(currentDocType)}`, 150, 32);
+                    doc.text(`Tanggal: ${formatDate(document.getElementById('documentDate').value)}`, 150, 37);
+                    doc.text(`Valid Until: ${formatDate(document.getElementById('validUntil').value)}`, 150, 42);
+                    
+                    // Line separator
+                    doc.setDrawColor(229, 231, 235);
+                    doc.line(20, 50, 190, 50);
+                    
+                    // Client info
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text('Kepada:', 20, 65);
+                    doc.text(document.getElementById('clientName').value, 20, 72);
+                    doc.text(document.getElementById('clientEmail').value, 20, 77);
+                    doc.text(document.getElementById('clientPhone').value, 20, 82);
+                    doc.text(document.getElementById('clientAddress').value, 20, 87);
+                    
+                    // Items table
+                    let yPosition = 105;
+                    
+                    // Table header
+                    doc.setFillColor(248, 250, 252);
+                    doc.rect(20, yPosition - 5, 170, 10, 'F');
+                    
+                    doc.setFontSize(10);
+                    doc.setTextColor(55, 65, 81);
+                    doc.text('Deskripsi', 25, yPosition);
+                    doc.text('Qty', 120, yPosition);
+                    doc.text('Harga', 140, yPosition);
+                    doc.text('Total', 170, yPosition);
+                    
+                    yPosition += 10;
+                    
+                    // Table items
+                    let subtotal = 0;
+                    document.querySelectorAll('.item-row').forEach((row, index) => {
+                        const desc = row.querySelector('.item-desc').value || '';
+                        const qty = row.querySelector('.item-qty').value || '0';
+                        const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                        const total = parseFloat(row.querySelector('.item-total').value) || 0;
+                        
+                        subtotal += total;
+                        
+                        doc.setTextColor(0, 0, 0);
+                        doc.text(desc.substring(0, 40), 25, yPosition);
+                        doc.text(qty, 120, yPosition);
+                        doc.text(formatCurrency(price).replace('Rp', ''), 140, yPosition);
+                        doc.text(formatCurrency(total).replace('Rp', ''), 170, yPosition);
+                        
+                        yPosition += 8;
+                        
+                        // Add new page if needed
+                        if (yPosition > 250) {
+                            doc.addPage();
+                            yPosition = 30;
+                        }
+                    });
+                    
+                    // Totals
+                    yPosition += 10;
+                    const taxRate = parseFloat(document.getElementById('taxType').value) || 0;
+                    const discountAmount = parseFloat(document.getElementById('discount').value) || 0;
+                    const tax = (subtotal * taxRate) / 100;
+                    const grandTotal = subtotal + tax - discountAmount;
+                    
+                    // Draw totals box
+                    doc.setDrawColor(229, 231, 235);
+                    doc.line(120, yPosition, 190, yPosition);
+                    
+                    yPosition += 8;
+                    doc.text('Subtotal:', 125, yPosition);
+                    doc.text(formatCurrency(subtotal).replace('Rp', ''), 170, yPosition);
+                    
+                    yPosition += 6;
+                    doc.text('Pajak:', 125, yPosition);
+                    doc.text(formatCurrency(tax).replace('Rp', ''), 170, yPosition);
+                    
+                    yPosition += 6;
+                    doc.text('Diskon:', 125, yPosition);
+                    doc.text(formatCurrency(discountAmount).replace('Rp', ''), 170, yPosition);
+                    
+                    yPosition += 8;
+                    doc.setDrawColor(59, 130, 246);
+                    doc.line(120, yPosition - 2, 190, yPosition - 2);
+                    
+                    doc.setFontSize(12);
+                    doc.setTextColor(31, 41, 55);
+                    doc.text('TOTAL:', 125, yPosition);
+                    doc.text(formatCurrency(grandTotal).replace('Rp', 'Rp '), 170, yPosition);
+                    
+                    // Notes
+                    yPosition += 20;
+                    const notes = document.getElementById('notes').value;
+                    if (notes) {
+                        doc.setFontSize(10);
+                        doc.setTextColor(0, 0, 0);
+                        doc.text('Catatan:', 20, yPosition);
+                        
+                        const splitNotes = doc.splitTextToSize(notes, 170);
+                        doc.text(splitNotes, 20, yPosition + 6);
+                        yPosition += (splitNotes.length * 4) + 10;
+                    }
+                    
+                    // Signature
+                    yPosition += 15;
+                    doc.text('Hormat kami,', 130, yPosition);
+                    yPosition += 20;
+                    doc.text('Buat Website Team', 130, yPosition);
+                    
+                    // Save PDF
+                    const filename = `${docTitle.toLowerCase()}_${document.getElementById('documentNumber').value || 'draft'}.pdf`;
+                    doc.save(filename);
+                    
+                    showMessage('success', 'PDF berhasil didownload!');
+                    
+                } catch (error) {
+                    console.error('Error generating PDF:', error);
+                    showMessage('error', 'Gagal generate PDF. Silahkan coba lagi.');
+                } finally {
+                    showLoading(false);
+                }
+            }, 500);
+        }
+
+        function printDocument() {
+            if (!validateForm()) return;
+            
+            const printWindow = window.open('', '_blank');
+            const printContent = generatePrintHTML();
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            printWindow.onload = function() {
+                printWindow.print();
+                printWindow.close();
+            };
+        }
+
+        function generatePrintHTML() {
+            const docTitle = currentDocType === 'quotation' ? 'QUOTATION' : 'INVOICE';
+            
+            let itemsHTML = '';
+            document.querySelectorAll('.item-row').forEach(row => {
+                const desc = row.querySelector('.item-desc').value || '';
+                const qty = row.querySelector('.item-qty').value || '0';
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const total = parseFloat(row.querySelector('.item-total').value) || 0;
+                
+                itemsHTML += `
+                    <tr>
+                        <td>${desc}</td>
+                        <td style="text-align: center;">${qty}</td>
+                        <td style="text-align: right;">${formatCurrency(price)}</td>
+                        <td style="text-align: right;">${formatCurrency(total)}</td>
+                    </tr>
+                `;
+            });
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${docTitle}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+                        .company-info h3 { color: #3b82f6; margin: 0; }
+                        .document-title { font-size: 24px; font-weight: bold; }
+                        .client-info { background: #f8fafc; padding: 15px; margin: 20px 0; border-left: 4px solid #3b82f6; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+                        th { background: #f8fafc; font-weight: bold; }
+                        .totals { margin-left: auto; width: 300px; margin-top: 20px; }
+                        .total-row { display: flex; justify-content: space-between; padding: 5px 0; }
+                        .total-final { border-top: 2px solid #3b82f6; font-weight: bold; font-size: 16px; padding-top: 10px; }
+                        .notes { background: #f8fafc; padding: 15px; margin: 20px 0; border-radius: 5px; }
+                        .signature { text-align: right; margin-top: 40px; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="company-info">
+                            <h3>${document.getElementById('companyName').value}</h3>
+                            <p>${document.getElementById('companyEmail').value}</p>
+                            <p>${document.getElementById('companyPhone').value}</p>
+                            <p>${document.getElementById('companyAddress').value}</p>
+                        </div>
+                        <div>
+                            <h2 class="document-title">${docTitle}</h2>
+                            <p><strong>No:</strong> ${document.getElementById('documentNumber').value || generateDocNumber(currentDocType)}</p>
+                            <p><strong>Tanggal:</strong> ${formatDate(document.getElementById('documentDate').value)}</p>
+                            <p><strong>Valid Until:</strong> ${formatDate(document.getElementById('validUntil').value)}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="client-info">
+                        <strong>Kepada:</strong><br>
+                        ${document.getElementById('clientName').value}<br>
+                        ${document.getElementById('clientEmail').value}<br>
+                        ${document.getElementById('clientPhone').value}<br>
+                        ${document.getElementById('clientAddress').value}
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Deskripsi</th>
+                                <th style="text-align: center;">Qty</th>
+                                <th style="text-align: right;">Harga</th>
+                                <th style="text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                    
+                    <div class="totals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span>${document.getElementById('subtotal').textContent}</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Pajak:</span>
+                            <span>${document.getElementById('tax').textContent}</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Diskon:</span>
+                            <span>${document.getElementById('discountAmount').textContent}</span>
+                        </div>
+                        <div class="total-row total-final">
+                            <span>TOTAL:</span>
+                            <span>${document.getElementById('grandTotal').textContent}</span>
+                        </div>
+                    </div>
+                    
+                    ${document.getElementById('notes').value ? `
+                        <div class="notes">
+                            <strong>Catatan:</strong><br>
+                            ${document.getElementById('notes').value}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="signature">
+                        <p><strong>Hormat kami,</strong></p>
+                        <br><br>
+                        <p><strong>Buat Website Team</strong></p>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        function sendWhatsApp() {
+            if (!validateForm()) return;
+            
+            const docTitle = currentDocType === 'quotation' ? 'Quotation' : 'Invoice';
+            const clientName = document.getElementById('clientName').value;
+            const docNumber = document.getElementById('documentNumber').value || generateDocNumber(currentDocType);
+            const grandTotal = document.getElementById('grandTotal').textContent;
+            
+            let itemsList = '';
+            document.querySelectorAll('.item-row').forEach((row, index) => {
+                const desc = row.querySelector('.item-desc').value || '';
+                const qty = row.querySelector('.item-qty').value || '0';
+                const total = parseFloat(row.querySelector('.item-total').value) || 0;
+                
+                if (desc) {
+                    itemsList += `${index + 1}. ${desc} (${qty}x) - ${formatCurrency(total)}\n`;
+                }
+            });
+            
+            const message = `🧾 *${docTitle.toUpperCase()}*
+
+📋 *Detail Dokumen:*
+• No. ${docTitle}: ${docNumber}
+• Tanggal: ${formatDate(document.getElementById('documentDate').value)}
+• Kepada: ${clientName}
+
+💼 *Rincian Layanan:*
+${itemsList}
+
+💰 *Total: ${grandTotal}*
+
+📝 *Catatan:*
+${document.getElementById('notes').value || 'Terima kasih atas kepercayaan Anda.'}
+
+---
+Buat Website - Jauhar's Corps
+📧 ${document.getElementById('companyEmail').value}
+📱 ${document.getElementById('companyPhone').value}
+
+Butuh revisi atau ada pertanyaan? Chat kami langsung! 😊`;
+
+            openWhatsApp(message);
+        }
+
+        function openWhatsApp(message) {
+            const phoneNumber = '6285868646342';
+            const encodedMessage = encodeURIComponent(message);
+            
+            // Deteksi device
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            
+            if (isIOS) {
+                const whatsappAppUrl = `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
+                const webUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+                
+                const startTime = Date.now();
+                const timeout = setTimeout(() => {
+                    window.open(webUrl, '_blank');
+                }, 2000);
+                
+                const handleVisibilityChange = () => {
+                    if (Date.now() - startTime > 1000) {
+                        clearTimeout(timeout);
+                        document.removeEventListener('visibilitychange', handleVisibilityChange);
+                    }
+                };
+                
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                window.location.href = whatsappAppUrl;
+                
+            } else if (isAndroid) {
+                const intentUrl = `intent://send?phone=${phoneNumber}&text=${encodedMessage}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
+                const webUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+                
+                try {
+                    window.location.href = intentUrl;
+                    setTimeout(() => {
+                        window.open(webUrl, '_blank');
+                    }, 1000);
+                } catch (e) {
+                    window.open(webUrl, '_blank');
+                }
+                
+            } else {
+                const webUrl = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+                window.open(webUrl, '_blank');
+            }
+        }
+
+        function validateForm() {
+            const requiredFields = [
+                { id: 'clientName', name: 'Nama Klien' },
+                { id: 'documentNumber', name: 'Nomor Dokumen' },
+                { id: 'documentDate', name: 'Tanggal Dokumen' }
+            ];
+            
+            for (let field of requiredFields) {
+                if (!document.getElementById(field.id).value.trim()) {
+                    showMessage('error', `${field.name} harus diisi!`);
+                    document.getElementById(field.id).focus();
+                    return false;
+                }
+            }
+            
+            // Check if at least one item exists
+            const hasItems = Array.from(document.querySelectorAll('.item-row')).some(row => {
+                return row.querySelector('.item-desc').value.trim();
+            });
+            
+            if (!hasItems) {
+                showMessage('error', 'Minimal harus ada satu item!');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function showMessage(type, message) {
+            const successDiv = document.getElementById('successMessage');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            // Hide both messages first
+            successDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            
+            if (type === 'success') {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                setTimeout(() => successDiv.style.display = 'none', 5000);
+            } else {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => errorDiv.style.display = 'none', 5000);
+            }
+        }
+
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const preview = document.getElementById('preview');
+            
+            if (show) {
+                loading.style.display = 'block';
+                preview.style.display = 'none';
+            } else {
+                loading.style.display = 'none';
+                preview.style.display = 'block';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default document number
+            document.getElementById('documentNumber').value = generateDocNumber(currentDocType);
+            
+            // Add event listeners to all existing inputs
+            document.querySelectorAll('.item-row').forEach(row => {
+                addItemEventListeners(row);
+            });
+            
+            // Add event listeners to form inputs
+            document.querySelectorAll('#documentForm input, #documentForm select, #documentForm textarea').forEach(input => {
+                input.addEventListener('input', updatePreview);
+            });
+            
+            // Add event listeners for calculation
+            document.getElementById('taxType').addEventListener('change', () => {
+                calculateTotals();
+                updatePreview();
+            });
+            
+            document.getElementById('discount').addEventListener('input', () => {
+                calculateTotals();
+                updatePreview();
+            });
+            
+            // Initial calculations
+            calculateTotals();
+            updatePreview();
+        });
+    </script>
+</body>
+</html>
