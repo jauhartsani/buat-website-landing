@@ -241,7 +241,7 @@ function handleFormSubmission(form) {
         submitBtn.disabled = false;
 
         const whatsappMessage = createWhatsAppMessage(data);
-        const whatsappUrl = `https://wa.me/6281234567890?text=${encodeURIComponent(whatsappMessage)}`;
+        const whatsappUrl = `https://wa.me/6285868646342?text=${encodeURIComponent(whatsappMessage)}`;
 
         // Buka WhatsApp langsung
         window.open(whatsappUrl, '_blank');
@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // WhatsApp floating button (optional enhancement)
 function addFloatingWhatsApp() {
     const floatingBtn = document.createElement('a');
-    floatingBtn.href = 'https://wa.me/6281234567890';
+    floatingBtn.href = 'https://wa.me/6285868646342';
     floatingBtn.target = '_blank';
     floatingBtn.className = 'floating-whatsapp';
     floatingBtn.innerHTML = '<i class="fab fa-whatsapp"></i>';
