@@ -206,7 +206,6 @@ function clearError(errorElement) {
         errorElement.parentElement.querySelector('input, textarea, select').style.borderColor = '#e1e8ed';
     }
 }
-
 function handleFormSubmission(form) {
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
@@ -230,30 +229,164 @@ function handleFormSubmission(form) {
         // Here you would typically send the data to your server
         console.log('Form Data:', data);
 
-        // Show success message
-        showSuccessMessage();
+        const whatsappMessage = createWhatsAppMessage(data);
+        
+        // Coba buka WhatsApp dengan multiple fallback methods
+        openWhatsApp(whatsappMessage);
 
-        // Reset form
+        // Reset form dan restore button
         form.reset();
-
-        // Restore button
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-
-        const whatsappMessage = createWhatsAppMessage(data);
-        const whatsappUrl = `https://wa.me/6285868646342?text=${encodeURIComponent(whatsappMessage)}`;
-
-        // Buka WhatsApp langsung
-        window.open(whatsappUrl, '_blank');
-
-        // Reset form
-        form.reset();
         showSuccessMessage();
-    }, 2000); // 2 second delay to simulate network request
+        
+    }, 2000);
 }
 
+function openWhatsApp(message) {
+    const phoneNumber = '6285868646342';
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Deteksi device
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    
+    // Method 1: Coba dengan whatsapp:// scheme terlebih dahulu (iOS native)
+    if (isIOS) {
+        const whatsappAppUrl = `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
+        const webUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+        
+        // Coba buka app WhatsApp terlebih dahulu
+        const startTime = Date.now();
+        const timeout = setTimeout(() => {
+            // Jika app tidak terbuka dalam 2 detik, buka web version
+            window.open(webUrl, '_blank');
+        }, 2000);
+        
+        // Event listener untuk mendeteksi jika user kembali ke browser
+        const handleVisibilityChange = () => {
+            if (Date.now() - startTime > 1000) {
+                clearTimeout(timeout);
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+            }
+        };
+        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        // Coba buka app
+        window.location.href = whatsappAppUrl;
+        
+    } else if (isAndroid) {
+        // Android: coba intent terlebih dahulu, fallback ke web
+        const intentUrl = `intent://send?phone=${phoneNumber}&text=${encodedMessage}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
+        const webUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+        
+        try {
+            window.location.href = intentUrl;
+            
+            // Fallback ke web jika app tidak tersedia
+            setTimeout(() => {
+                window.open(webUrl, '_blank');
+            }, 1000);
+        } catch (e) {
+            window.open(webUrl, '_blank');
+        }
+        
+    } else {
+        // Desktop atau browser lain: langsung ke web WhatsApp
+        const webUrl = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+        window.open(webUrl, '_blank');
+    }
+}
 
+// Alternative method: menggunakan user interaction yang lebih eksplisit
+function openWhatsAppAlternative(message) {
+    const phoneNumber = '6285868646342';
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Buat link yang bisa diklik user
+    const linkContainer = document.createElement('div');
+    linkContainer.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; max-width: 300px;">
+                <h3>Pilih cara mengirim pesan:</h3>
+                <a href="whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}" 
+                   style="display: block; background: #25D366; color: white; padding: 12px; margin: 10px 0; text-decoration: none; border-radius: 5px;">
+                   📱 Buka WhatsApp App
+                </a>
+                <a href="https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}" 
+                   target="_blank"
+                   style="display: block; background: #128C7E; color: white; padding: 12px; margin: 10px 0; text-decoration: none; border-radius: 5px;">
+                   🌐 Buka WhatsApp Web
+                </a>
+                <button onclick="this.parentElement.parentElement.remove()" 
+                        style="background: #ccc; border: none; padding: 8px 16px; border-radius: 5px; margin-top: 10px;">
+                   Tutup
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(linkContainer);
+}
 
+// Method dengan deteksi yang lebih akurat
+function openWhatsAppImproved(message) {
+    const phoneNumber = '6285868646342';
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Cek apakah WhatsApp tersedia
+    function checkWhatsAppAvailable() {
+        return new Promise((resolve) => {
+            const link = document.createElement('a');
+            link.href = `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
+            
+            const startTime = Date.now();
+            
+            // Handler untuk blur event (user meninggalkan browser)
+            const handleBlur = () => {
+                if (Date.now() - startTime < 1000) {
+                    resolve(true); // App terbuka
+                }
+            };
+            
+            window.addEventListener('blur', handleBlur, { once: true });
+            
+            // Handler untuk focus kembali (user kembali ke browser tanpa buka app)
+            const handleFocus = () => {
+                setTimeout(() => {
+                    resolve(false); // App tidak terbuka
+                }, 100);
+            };
+            
+            window.addEventListener('focus', handleFocus, { once: true });
+            
+            // Timeout fallback
+            setTimeout(() => {
+                resolve(false);
+            }, 2000);
+            
+            // Coba buka app
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+    
+    // Untuk iOS dan mobile, coba app dulu
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        checkWhatsAppAvailable().then(appOpened => {
+            if (!appOpened) {
+                // Fallback ke web version
+                window.open(`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`, '_blank');
+            }
+        });
+    } else {
+        // Desktop: langsung ke web WhatsApp
+        window.open(`https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`, '_blank');
+    }
+}
 
 
 function createWhatsAppMessage(data) {
